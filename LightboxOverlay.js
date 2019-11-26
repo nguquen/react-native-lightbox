@@ -92,7 +92,9 @@ export default class LightboxOverlay extends Component {
         opacity: 1
       },
       pan: new Animated.Value(0),
-      openVal: new Animated.Value(0)
+      openVal: new Animated.Value(0),
+      windowHeight: Dimensions.get("window").height,
+      windowWidth: Dimensions.get("window").width
     };
 
     Dimensions.addEventListener("change", () => {
@@ -101,9 +103,11 @@ export default class LightboxOverlay extends Component {
         windowWidth: Dimensions.get("window").width
       });
     });
+
+    this._componentWillMount();
   }
 
-  componentWillMount() {
+  _componentWillMount = () => {
     this._panResponder = PanResponder.create({
       // Ask to be the responder:
       onStartShouldSetPanResponder: (evt, gestureState) =>
@@ -142,7 +146,7 @@ export default class LightboxOverlay extends Component {
         }
       }
     });
-  }
+  };
 
   componentDidMount() {
     if (this.props.isOpen) {
@@ -188,8 +192,8 @@ export default class LightboxOverlay extends Component {
     });
   };
 
-  componentWillReceiveProps(props) {
-    if (this.props.isOpen != props.isOpen && props.isOpen) {
+  componentDidUpdate(prevProps) {
+    if (this.props.isOpen != prevProps.isOpen && this.props.isOpen) {
       this.open();
     }
   }
