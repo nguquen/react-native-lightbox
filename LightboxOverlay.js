@@ -13,8 +13,6 @@ import {
   View
 } from "react-native";
 
-const WINDOW_HEIGHT = Dimensions.get("window").height;
-const WINDOW_WIDTH = Dimensions.get("window").width;
 const DRAG_DISMISS_THRESHOLD = 150;
 const STATUS_BAR_OFFSET = Platform.OS === "android" ? -25 : 0;
 const isIOS = Platform.OS === "ios";
@@ -24,8 +22,8 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 0,
     left: 0,
-    width: WINDOW_WIDTH,
-    height: WINDOW_HEIGHT
+    width: "100%",
+    height: "100%"
   },
   open: {
     position: "absolute",
@@ -38,7 +36,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 0,
     left: 0,
-    width: WINDOW_WIDTH,
+    width: "100%",
     backgroundColor: "transparent"
   },
   closeButton: {
@@ -74,7 +72,6 @@ export default class LightboxOverlay extends Component {
     renderHeader: PropTypes.func,
     onOpen: PropTypes.func,
     onClose: PropTypes.func,
-    willClose: PropTypes.func,
     swipeToDismiss: PropTypes.bool
   };
 
@@ -83,17 +80,28 @@ export default class LightboxOverlay extends Component {
     backgroundColor: "black"
   };
 
-  state = {
-    isAnimating: false,
-    isPanning: false,
-    target: {
-      x: 0,
-      y: 0,
-      opacity: 1
-    },
-    pan: new Animated.Value(0),
-    openVal: new Animated.Value(0)
-  };
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      isAnimating: false,
+      isPanning: false,
+      target: {
+        x: 0,
+        y: 0,
+        opacity: 1
+      },
+      pan: new Animated.Value(0),
+      openVal: new Animated.Value(0)
+    };
+
+    Dimensions.addEventListener("change", () => {
+      this.setState({
+        windowHeight: Dimensions.get("window").height,
+        windowWidth: Dimensions.get("window").width
+      });
+    });
+  }
 
   componentWillMount() {
     this._panResponder = PanResponder.create({
@@ -120,7 +128,7 @@ export default class LightboxOverlay extends Component {
             target: {
               y: gestureState.dy,
               x: gestureState.dx,
-              opacity: 1 - Math.abs(gestureState.dy / WINDOW_HEIGHT)
+              opacity: 1 - Math.abs(gestureState.dy / this.state.windowHeight)
             }
           });
           this.close();
@@ -159,14 +167,10 @@ export default class LightboxOverlay extends Component {
     Animated.spring(this.state.openVal, {
       toValue: 1,
       ...this.props.springConfig
-    }).start(() => {
-      this.setState({ isAnimating: false });
-      this.props.didOpen();
-    });
+    }).start(() => this.setState({ isAnimating: false }));
   };
 
   close = () => {
-    this.props.willClose();
     if (isIOS) {
       StatusBar.setHidden(false, "fade");
     }
@@ -219,7 +223,7 @@ export default class LightboxOverlay extends Component {
         top: this.state.pan
       };
       lightboxOpacityStyle.opacity = this.state.pan.interpolate({
-        inputRange: [-WINDOW_HEIGHT, 0, WINDOW_HEIGHT],
+        inputRange: [-this.state.windowHeight, 0, this.state.windowHeight],
         outputRange: [0, 1, 0]
       });
     }
@@ -240,11 +244,11 @@ export default class LightboxOverlay extends Component {
         }),
         width: openVal.interpolate({
           inputRange: [0, 1],
-          outputRange: [origin.width, WINDOW_WIDTH]
+          outputRange: [origin.width, this.state.windowWidth]
         }),
         height: openVal.interpolate({
           inputRange: [0, 1],
-          outputRange: [origin.height, WINDOW_HEIGHT]
+          outputRange: [origin.height, this.state.windowHeight]
         })
       }
     ];
@@ -256,7 +260,7 @@ export default class LightboxOverlay extends Component {
           { backgroundColor: backgroundColor },
           lightboxOpacityStyle
         ]}
-      ></Animated.View>
+      />
     );
     const header = (
       <Animated.View style={[styles.header, lightboxOpacityStyle]}>
