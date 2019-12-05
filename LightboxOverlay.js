@@ -98,6 +98,7 @@ export default class LightboxOverlay extends Component {
     };
 
     Dimensions.addEventListener("change", () => {
+      StatusBar.setHidden(true, "fade");
       this.setState({
         windowHeight: Dimensions.get("window").height,
         windowWidth: Dimensions.get("window").width
