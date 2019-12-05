@@ -298,6 +298,7 @@ export default class LightboxOverlay extends Component {
         visible={isOpen}
         transparent={true}
         onRequestClose={() => this.close()}
+        supportedOrientations={["portrait", "landscape"]}
       >
         {background}
         {content}
